@@ -2,26 +2,41 @@
     <v-container>
         <v-row>
             <v-col cols="6">
-                <v-simple-table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>標題</th>
-                            <th>敘述</th>
-                            <th>檔案連結</th>
-                            <th>所屬部門</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="file in files" :key="file.id">
-                            <td>{{  file.id  }}</td>
-                            <td>{{ file.title }}</td>
-                            <td>{{ file.description }}</td>
-                            <td>{{ file.file_url }}</td>
-                            <td>{{ file.department.name }}</td>
-                        </tr>
-                    </tbody>
-                </v-simple-table>
+                <template>
+                    <v-data-table
+                        :headers="headers"
+                        :items="files"
+                        :single-expand="singleExpand"
+                        :expanded.sync="expanded"
+                        item-key="id"
+                        show-expand
+                        class="elevation-1"
+                        :search="search"
+                        :page.sync="page"
+                        hide-default-footer
+                    >
+                        <template v-slot:top>
+                            <v-toolbar flat>
+                                <v-toolbar-title>資料表</v-toolbar-title>
+                                <v-spacer></v-spacer>
+                                <v-text-field v-model="search" append-icon="mdi-magnify" label="Search" single-line hide-details ></v-text-field> 
+                            </v-toolbar>
+                        </template>
+                        <template v-slot:expanded-item="{ headers, item }">
+                            <td :colspan="headers.length">
+                                文件連結：{{item.file_url}}<br>
+                                內容描述：{{item.description}}
+                            </td>
+                        </template>
+                    </v-data-table>
+                    <div class="text-center pt-2">
+                        <v-pagination
+                            v-model="page"
+                            :length="pageCount"
+                            total-visible="10"
+                        ></v-pagination>
+                    </div>
+                </template>
             </v-col>
             <v-col cols="6">   
                 <ValidationObserver v-slot="{ invalid }">
@@ -67,6 +82,17 @@
     export default {
     data() {
         return {
+            headers:[
+                {
+                    text: 'ID',
+                    align: 'start',
+                    sortable: false,
+                    value: 'id'
+                },
+                { text: '文件標題', value: 'title' },
+                { text: '所屬部門', value: 'department.name' },
+            ],
+            search : "" ,
             files: [],
             title: "",
             description: "",
@@ -78,18 +104,36 @@
             new_description: "",
             new_file_url: "",
             new_department_id: "",
+            singleExpand : true,
+            expanded: [],
+            page: '',
+            pageCount: '',
         };
     },
     mounted() {
         this.loadFiles();
         this.loadDepartment();
     },
-    computed: {},
+    watch: {
+        page (newVal, oldVal) {
+            console.log(oldVal);
+            this.loadFiles(newVal);
+        }
+    },
+    computed: {
+    },
+    updated() {
+
+    },
     methods: {
-        async loadFiles() {
-            const response = await this.$axios.get("/api/files");
-            this.files = response.data;
+        // 載入資料
+        async loadFiles(pageNumber) {
+            const response = await this.$axios.get("/api/files?page="+pageNumber);
+            this.files = response.data.data;
+            this.page = response.data.current_page;
+            this.pageCount = response.data.last_page;
         },
+        // 上傳資料
         async uploadData() {
             const userInput = {
                 "title": this.title,
@@ -98,12 +142,14 @@
                 "department_id": this.department_id,
             };
             await this.$axios.post("/api/files", userInput);
-            await this.loadFiles();
+            await this.loadFiles(this.page);
         },
+        // 載部門資料
         async loadDepartment() {
             const response = await this.$axios.get("/api/departments");
             this.departments = response.data;
         },
+        // 更新資料
         async updateData() {
             const userInput = {
                 "title": this.new_title,
@@ -112,14 +158,14 @@
                 "department_id": this.new_department_id,
             };
             await this.$axios.patch(`/api/files/${this.data_id}`, userInput);
-            await this.loadFiles();
+            await this.loadFiles(this.page);
         },
+        // 刪除資料
         async deleteData() {
             if(confirm(`你確定要刪除ID「${this.data_id}」這筆資料嗎？`)){
                 await this.$axios.delete(`/api/files/${this.data_id}`);
-                await this.loadFiles();
+                await this.loadFiles(this.page);
             }
-            
         },
         async showData(){
             const response = await this.$axios.get(`/api/files/${this.data_id}`);
