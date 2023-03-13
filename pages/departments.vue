@@ -51,18 +51,27 @@
     },
     mounted() {
         this.loadDepartments();
+        this.checkUserStatus();
     },
     computed: {},
     methods: {
         async loadDepartments() {
-            const response = await this.$axios.get("/api/departments");
+            const response = await this.$axios.get("/api/departments",{
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
             this.departments = response.data;
         },
         async uploadData() {
             const userInput = {
                 "name": this.department_name,
             };
-            const response = await this.$axios.post("/api/departments", userInput);
+            const response = await this.$axios.post("/api/departments", userInput,{
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
             console.log(response);
             await this.loadDepartments();
             
@@ -71,20 +80,40 @@
             const userInput = {
                 "name": this.new_department_name
             };
-            await this.$axios.patch(`/api/departments/${this.data_id}`, userInput);
+            await this.$axios.patch(`/api/departments/${this.data_id}`, userInput,{
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
             await this.loadDepartments();
         },
         async deleteData() {
             if(confirm(`你確定要刪除ID「${this.data_id}」這筆資料嗎？`)){
-                await this.$axios.delete(`/api/departments/${this.data_id}`);
+                await this.$axios.delete(`/api/departments/${this.data_id}`,{
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
                 await this.loadDepartments();
             }
             
         },
         async showData(){
-            const response = await this.$axios.get(`/api/departments/${this.data_id}`);
+            const response = await this.$axios.get(`/api/departments/${this.data_id}`,{
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
             this.new_department_name = response.data.name
-        } 
+        },
+        checkUserStatus(){
+        if (localStorage.getItem('token')) {
+            console.log('Token found in local storage.')
+            return true
+        } else {
+            this.$router.push({ path: '/' })
+            }
+        },
     },
 }
 </script>

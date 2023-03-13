@@ -3,8 +3,8 @@ import colors from 'vuetify/es5/util/colors'
 export default {
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
-    titleTemplate: '%s - demo',
-    title: 'demo',
+    titleTemplate: 'FQA管理系統',
+    title: 'FQA管理系統',
     htmlAttrs: {
       lang: 'en',
     },
@@ -71,4 +71,7 @@ export default {
   build: {
     transpile: ["vee-validate/dist/rules"],
   },
+  router: {
+    middleware: 'auth'
+  }
 }
