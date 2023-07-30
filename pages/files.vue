@@ -29,6 +29,10 @@
                   文件連結：{{item.file_url}}<br>
                   內容描述：{{item.description}}
               </td>
+              <td :colspan="headers.length">
+                  文件連結：{{item.file_url}}<br>
+                  內容描述：{{item.description}}
+              </td>
           </template>
           </v-data-table>
           <div class="text-center pt-2">
